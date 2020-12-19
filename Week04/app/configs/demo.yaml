@@ -5,10 +5,9 @@ http:  # http配置
   host:                        # http监听地址
   port: 8080                   # http监听端口
   shutdown_timeout: 60         # http优雅关闭等待超时时长(单位秒)
-  name: apiserver              # API Server的名字
-  url: http://localhost:8080   # pingServer函数请求的API服务器的ip:port
-  max_ping_count: 2            # pingServer函数try的次数
-jwt_secret: Rtg8BPsKNE4f2mB4mgvzKONGPZZQSaJWNLijxR425qRgq0iBb5
+debug:
+  host:
+  port: 8090
 log:
   level: 5  # 日志级别(1:fatal 2:error,3:warn,4:info,5:debug)
   format: text # 日志格式（支持输出格式：text/json）
@@ -25,7 +24,7 @@ log_gorm_hook: # 日志gorm钩子配置
   max_idle_conns: 1  # 设置空闲连接池中的最大连接数
   table: "logger"  # 数据库表名
 db:
-  name: wfgsmall
+  name: test
   addr: 127.0.0.1:3306
   username: root
   password: root
@@ -34,4 +33,3 @@ redis:
   addr: 127.0.0.1:6399
   password: 123456
   db: 1
-  dbapi: 4

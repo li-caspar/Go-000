@@ -6,6 +6,6 @@ package demo
 import "github.com/google/wire"
 
 func InitializeApp(filename string) *App {
-	wire.Build(NewConfig, NewLogger, NewDB, NewEngine, NewApp)
+	wire.Build(NewConfig, NewLogger, NewDB, NewApp)
 	return &App{}
 }

@@ -18,7 +18,6 @@ func main() {
 		fmt.Printf("app failed:%v\n", err)
 	}
 	App.Logger.Println("app stop")
-	App.Engine.Stop()
 	App.DataBase.Stop()
 	App.Logger.Stop()
 }

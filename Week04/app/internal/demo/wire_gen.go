@@ -11,7 +11,6 @@ func InitializeApp(filename string) *App {
 	config := NewConfig(filename)
 	logger := NewLogger()
 	dataBase := NewDB()
-	engine := NewEngine()
-	app := NewApp(config, logger, dataBase, engine)
+	app := NewApp(config, logger, dataBase)
 	return app
 }

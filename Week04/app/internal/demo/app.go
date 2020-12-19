@@ -20,12 +20,11 @@ type App struct {
 	config   Config
 	DataBase *DataBase
 	Logger   *Logger
-	Engine   *Engine
 }
 
 var DemoApp *App
 
-func NewApp(cfg Config, logger *Logger, db *DataBase, engine *Engine) *App {
+func NewApp(cfg Config, logger *Logger, db *DataBase) *App {
 	if DemoApp != nil {
 		return DemoApp
 	}
@@ -33,48 +32,34 @@ func NewApp(cfg Config, logger *Logger, db *DataBase, engine *Engine) *App {
 		config:   cfg,
 		DataBase: db,
 		Logger:   logger,
-		Engine:   engine,
 	}
 	return DemoApp
 }
 
-func (app *App) StartHTTPServer(ctx context.Context, handler *gin.Engine) error {
-	addr := fmt.Sprintf("%s:%d", viper.GetString("http.host"), viper.GetInt("http.port"))
-	sx := Serverx{}
-	srv := &http.Server{
-		Addr:         addr,
-		Handler:      handler,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  15 * time.Second,
-	}
-	cancel := func() {
-		ctx, cancel := context.WithTimeout(ctx, time.Second*time.Duration(viper.GetInt("http.shutdown_timeout")))
-		defer cancel()
-		srv.SetKeepAlivesEnabled(false)
-		if err := srv.Shutdown(ctx); err != nil {
-			app.Logger.Errorf(err.Error())
-		}
-	}
-	sx.server = srv
-	sx.cancel = cancel
-	app.Engine.AddServerxs(sx)
-	if err := srv.ListenAndServe(); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (app App) Start() error {
-	//var err error
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	g, ctx := errgroup.WithContext(ctx)
-
+	g, ctx := errgroup.WithContext(context.Background())
+	//启动http服务
 	g.Go(func() error {
-		web := InitWeb()
-		return app.StartHTTPServer(ctx, web)
+		demoweb, err := initDemoWeb()
+		if err != nil {
+			return err
+		}
+		addr := fmt.Sprintf("%s:%d", viper.GetString("http.host"), viper.GetInt("http.port"))
+		return app.StartHTTPServer(ctx, addr, demoweb)
 	})
+	//启动debug服务
+	g.Go(func() error {
+		demoweb, err := initDebugWeb()
+		if err != nil {
+			return err
+		}
+		addr := fmt.Sprintf("%s:%d", viper.GetString("debug.host"), viper.GetInt("debug.port"))
+		return app.StartHTTPServer(ctx, addr, demoweb)
+	})
+	//启动redis缓存服务
+	/*g.Go(func() error {
+
+	})*/
 
 	sc := make(chan os.Signal)
 	signal.Notify(sc, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
@@ -82,9 +67,43 @@ func (app App) Start() error {
 	g.Go(func() error {
 		return serverSignal(ctx, sc)
 	})
-	return g.Wait()
+	if err := g.Wait(); err != nil {
+		return err
+	}
+	return nil
 }
 
+//启动指定的服务
+func (app *App) StartHTTPServer(ctx context.Context, addr string, handler *gin.Engine) error {
+	srv := &http.Server{
+		Addr:         addr,
+		Handler:      handler,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  15 * time.Second,
+	}
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Println(err)
+			}
+		}()
+		select {
+		case <-ctx.Done():
+			ctxTimeOut, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(viper.GetInt("http.shutdown_timeout")))
+			defer cancel()
+			if err := srv.Shutdown(ctxTimeOut); err != nil {
+				app.Logger.Errorf(err.Error())
+			}
+		}
+	}()
+	if err := srv.ListenAndServe(); err != nil {
+		return err
+	}
+	return nil
+}
+
+//监听信号量
 func serverSignal(ctx context.Context, sc chan os.Signal) error {
 	select {
 	case sig := <-sc:
