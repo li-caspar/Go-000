@@ -11,10 +11,13 @@ import (
 
 func main() {
 	fmt.Println("client start")
-	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithInsecure())
-	opts = append(opts, grpc.WithBlock())
-	conn, err := grpc.Dial("localhost:8080", opts...)
+	opts := []grpc.DialOption{
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+	}
+	dailCtx, dailCancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer dailCancel()
+	conn, err := grpc.DialContext(dailCtx, "localhost:8080", opts...)
 	if err != nil {
 		log.Fatalf("faild to grpc dial:%v", err)
 	}
@@ -30,5 +33,4 @@ func main() {
 		log.Fatalf("faild to Get Post:%v", err)
 	}
 	log.Println(res)
-
 }
