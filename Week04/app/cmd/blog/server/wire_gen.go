@@ -7,15 +7,20 @@ package main
 
 import (
 	"app/internal/biz"
+	"app/internal/config"
 	"app/internal/data"
 	"app/internal/service"
 )
 
 // Injectors from wire.go:
 
-func InitializePostService() *service.PostService {
-	postData := data.NewPostData()
+func InitializePostService(cfg *config.Config) (*service.PostService, error) {
+	db, err := data.NewDB(cfg)
+	if err != nil {
+		return nil, err
+	}
+	postData := data.NewPostData(db)
 	postBiz := biz.NewPostBiz(postData)
 	postService := service.NewPostService(postBiz)
-	return postService
+	return postService, nil
 }

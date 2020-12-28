@@ -1,0 +1,18 @@
+runmode: debug                 # 开发模式, debug, release, test
+runenv: local
+loadLocation: Asia/Shanghai
+grpc:  # http配置
+  host:                 # http监听地址
+  port: 8080            # http监听端口
+db:
+  name: test
+  addr: 127.0.0.1:3306
+  username: root
+  password: root
+  charset: utf8mb4
+  debug: true
+redis:
+  addr: 127.0.0.1:6399
+  password: 123456
+  db: 1
+  dbapi: 4
