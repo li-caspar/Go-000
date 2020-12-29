@@ -18,8 +18,8 @@ func NewPostData(db *gorm.DB) *PostData {
 }
 
 func (p PostData) GetPost(id int64) (domain.Post, error) {
-	post := domain.Post{}
-	if err := p.db.First(&post).Error; err != nil {
+	post := domain.Post{Id: id}
+	if err := p.db.Take(&post).Error; err != nil {
 		return post, errors.Wrap(err, "db first post error")
 	}
 	return post, nil
