@@ -1,6 +1,11 @@
 package ratelimit
 
+import "errors"
 
-type RateLimit interface {
+var (
+	ErrExceededLimit = errors.New("Too many requests, exceeded the limit. ")
+)
+
+type RateLimiter interface {
 	Take() error
 }

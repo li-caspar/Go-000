@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-var once sync.Once
+var onceArr sync.Once
 
 type RollingArray struct {
 	values        []int64 //环形slice， 大小由snippet/accuracy决定, 数值为每个格的请求数
@@ -20,7 +20,7 @@ type RollingArray struct {
 	allowRequests int64         //窗口允许最大的请求数
 }
 
-var _ RateLimit = &RollingArray{}
+var _ RateLimiter = &RollingArray{}
 
 func NewRollingArray(snippet time.Duration, accuracy time.Duration, allowRequests int64) *RollingArray {
 	var size int = int(snippet) / int(accuracy)
@@ -38,9 +38,9 @@ func NewRollingArray(snippet time.Duration, accuracy time.Duration, allowRequest
 func (r *RollingArray) Take() error {
 	sum := r.sum()
 	if sum > r.allowRequests {
-		return fmt.Errorf("error:%s", r.string())
+		return ErrExceededLimit
 	}
-	once.Do(func() {
+	onceArr.Do(func() {
 		go func() {
 			if err := recover(); err != nil {
 				fmt.Printf("recover error:%s", err)
