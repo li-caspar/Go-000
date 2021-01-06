@@ -42,7 +42,6 @@ func (r *RollingChan) Take() error {
 			}
 			slideOut(r)
 		}()
-		time.Sleep(r.accuracy)
 		go func() {
 			if err := recover(); err != nil {
 				fmt.Printf("slideIn error:%s", err)
