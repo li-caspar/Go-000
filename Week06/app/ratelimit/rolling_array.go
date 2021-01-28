@@ -22,7 +22,7 @@ type RollingArray struct {
 var _ RateLimiter = &RollingArray{}
 
 func NewRollingArray(snippet time.Duration, accuracy time.Duration, allowRequests int64) *RollingArray {
-	size := int(snippet/accuracy) - 1
+	size := int(snippet / accuracy)
 	r := &RollingArray{
 		values:        make([]int64, size, size),
 		size:          size,

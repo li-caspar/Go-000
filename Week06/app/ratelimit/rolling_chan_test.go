@@ -1,6 +1,7 @@
 package ratelimit
 
 import (
+	"math/rand"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -31,28 +32,27 @@ func TestNewRollingChan(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f = NewRollingChan(tt.args.snippet, tt.args.accuracy, tt.args.allowRequests)
+			rand.Seed(time.Now().Unix())
 			for range [10]struct{}{} {
-				<-time.After(f.snippet)
+				<-time.After(f.snippet + f.accuracy)
 				go func() {
-					select {
-					case <-time.After(f.accuracy):
-						//t.Log(time.Now().Second())
-						for range [100]struct{}{} {
-							if err := f.Take(); err != nil {
-								//t.Logf("%d Take() error = %v", i, err)
-								atomic.AddInt64(&FailCount, 1)
-							} else {
-								//t.Log(i, "take once request")
-								atomic.AddInt64(&SuccessCount, 1)
-							}
+					for range [100]struct{}{} {
+						time.Sleep(time.Duration(rand.Intn(1000000)))
+						if err := f.Take(); err != nil {
+							//t.Logf("%d Take() error = %v", i, err)
+							atomic.AddInt64(&FailCount, 1)
+						} else {
+							//t.Log(i, "take once request")
+							atomic.AddInt64(&SuccessCount, 1)
 						}
 					}
 				}()
 			}
+
 		})
 	}
 	time.Sleep(2 * time.Second)
-
+	//t.Log(f.GetString())
 	t.Log("SuccessCount:", SuccessCount)
 	t.Log("FailCount:", FailCount)
 	t.Log("AllCount:", SuccessCount+FailCount)
