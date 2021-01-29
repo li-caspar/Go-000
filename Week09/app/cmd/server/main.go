@@ -11,6 +11,8 @@ import (
 	"syscall"
 )
 
+var shutdown = make(chan int8)
+
 func main() {
 	g, ctx := errgroup.WithContext(context.Background())
 	g.Go(func() error {
@@ -29,6 +31,7 @@ func serverSignal(ctx context.Context) error {
 	signal.Notify(sc, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	select {
 	case sig := <-sc:
+		shutdown <- 1
 		return fmt.Errorf("signal exit, %s", sig.String())
 	case <-ctx.Done():
 		fmt.Println("content done, signal return")
@@ -50,12 +53,17 @@ func acceptTCP(ctx context.Context) error {
 	if lis, err = net.ListenTCP("tcp", addr); err != nil {
 		return fmt.Errorf("net.ListenTCP error:%s", err)
 	}
+	//传递关闭信号,关闭监听连接
+	go func(lis *net.TCPListener) {
+		<-shutdown
+		_ = lis.Close()
+	}(lis)
 
 	for {
 		select {
 		case <-ctx.Done():
 			fmt.Println("context done, TCP server shutdown")
-			return lis.Close()
+			return nil
 		default:
 			if conn, err = lis.AcceptTCP(); err != nil {
 				return err
@@ -64,40 +72,47 @@ func acceptTCP(ctx context.Context) error {
 				if err := recover(); err != nil {
 					fmt.Println(err)
 				}
-				serverTCP(conn)
+				serverTCP(ctx, conn)
 			}()
 		}
 	}
 }
 
 //处理连接
-func serverTCP(conn *net.TCPConn) {
+func serverTCP(ctx context.Context, conn *net.TCPConn) {
 	ch := make(chan []byte, 10)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctxTCP, cancel := context.WithCancel(context.Background())
 	defer func() {
 		close(ch)
 		cancel()
 		_ = conn.Close()
 	}()
-	go dispatchTCP(conn, ctx, ch) //负责写
+	go dispatchTCP(conn, ctxTCP, ch) //负责写
 	reader := bufio.NewReader(conn)
 	for {
-		msg, err := reader.ReadBytes('\n') //读取到换行
-		if err != nil {
-			fmt.Printf("reader error:%s\n", err)
-			break
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			msg, err := reader.ReadBytes('\n') //读取到换行
+			if err != nil {
+				fmt.Printf("reader error:%s\n", err)
+				break
+			}
+			ch <- msg
 		}
-		ch <- msg
 	}
 }
 
 //接收消息并写消息到连接
 func dispatchTCP(conn *net.TCPConn, ctx context.Context, ch chan []byte) {
+	wr := bufio.NewWriter(conn)
 	for {
 		select {
 		case msg := <-ch:
 			fmt.Printf("serverTCP msg:%s", msg)
-			conn.Write([]byte(fmt.Sprintf("rev:%s", msg))) //写数据到连接
+			_, _ = wr.Write([]byte(fmt.Sprintf("rev:%s", msg))) //写数据到连接
+			_ = wr.Flush()
 		case <-ctx.Done():
 			return
 		}
