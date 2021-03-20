@@ -5,32 +5,32 @@ vue-element-admin的开源系统
 ##### 项目结构
 ```
 |-- cmd
-|    -- apiserver           #正式环境目录
+|    -- apiserver              #正式环境目录
 |       |-- conf               #正式环境配置
-|       |-- log                 #正式环境日志
+|       |-- log                #正式环境日志
 |       |-- public
 |-- conf
-|-- docs                        #swagger api文件目录
+|-- docs                       #swagger api文件目录
 |-- internal
 |    -- app
-|       |-- config              #配置结构体
+|       |-- config             #配置结构体
 |       |-- context            #上下文
-|       |-- errors              #错误定义
+|       |-- errors             #错误定义
 |       |-- ginplus            #对gin常用功能的封装
-|       |-- middleware     #gin中间件
+|       |-- middleware         #gin中间件
 |       |-- model              #模型，针对数据表
-|       |-- router              #API路由，类似MVC里的controller
-|       |-- schema            #API的输入和输出的定义，用于swagger
-|       |-- service             #服务,业务功能代码
-|-- log                           #本地存放日志文件
- -- pkg                          #工具包
+|       |-- router             #API路由，类似MVC里的controller
+|       |-- schema             #API的输入和输出的定义，用于swagger
+|       |-- service            #服务,业务功能代码
+|-- log                        #本地存放日志文件
+ -- pkg                        #工具包
     |-- extend                 #额外的扩展功能
-    |-- gormplus            #gorm的常用功能封装
-    |-- gredis                  #redis功能的封装
+    |-- gormplus               #gorm的常用功能封装
+    |-- gredis                 #redis功能的封装
     |-- logger                 #日志功能
     |-- token                  #生成和校验token
-    |-- util                      #常用项
-    |-- version               #项目版本
+    |-- util                   #常用项
+    |-- version                #项目版本
 ```
 ##### 存在的问题
 
@@ -57,13 +57,13 @@ vue-element-admin的开源系统
     |   --- product       #gRPC
     |-- cmd
     |   --- product       #main包 二进制的生成
-    |-- configs            #项目配置yaml
+    |-- configs           #项目配置yaml
     -- internal
-        |-- biz             #biz层
-        |-- config         #配置
-        |-- data           #数据交互层  采用gorm
-        |-- domain       #DO层
-        |-- service        #服务层，主要的业务代码
+        |-- biz           #biz层
+        |-- config        #配置
+        |-- data          #数据交互层  采用gorm
+        |-- domain        #DO层
+        |-- service       #服务层，主要的业务代码
 ```
 
 #### 总结
